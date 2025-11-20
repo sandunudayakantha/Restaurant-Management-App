@@ -1,15 +1,24 @@
 import { ReactNode } from 'react';
 import Sidebar from './Sidebar';
-import { User } from '../types/user';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
   children: ReactNode;
-  user: User | null;
 }
 
-const Layout = ({ children, user }: LayoutProps) => {
+const Layout = ({ children }: LayoutProps) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0F0F0F]">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
   if (!user) {
-    return <div>Loading...</div>;
+    return null; // AuthProvider will redirect to login
   }
 
   return (

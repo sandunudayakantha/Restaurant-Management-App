@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axios from 'axios';
 import Layout from '../components/Layout';
-import { User, UserRole } from '../types/user';
+import { useAuth } from '../contexts/AuthContext';
+import { UserRole } from '../types/user';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -32,15 +32,13 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 type RestaurantFormData = z.infer<typeof restaurantSchema>;
 
 const Settings = () => {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const { user, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [restaurantError, setRestaurantError] = useState('');
   const [restaurantSuccess, setRestaurantSuccess] = useState('');
   const [restaurantLoading, setRestaurantLoading] = useState(false);
-  const [restaurantData, setRestaurantData] = useState<any>(null);
 
   const {
     register: registerPassword,
@@ -61,26 +59,13 @@ const Settings = () => {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
-    const fetchData = async () => {
+    const fetchRestaurantData = async () => {
       try {
-        const [userResponse, restaurantResponse] = await Promise.all([
-          axios.get(`${API_URL}/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(`${API_URL}/restaurant`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
+        const token = localStorage.getItem('accessToken');
+        const restaurantResponse = await axios.get(`${API_URL}/restaurant`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        setUser(userResponse.data.user);
-        setRestaurantData(restaurantResponse.data);
-        
         // Set form values
         if (restaurantResponse.data) {
           setRestaurantValue('name', restaurantResponse.data.name || '');
@@ -90,18 +75,16 @@ const Settings = () => {
           setRestaurantValue('default_currency', restaurantResponse.data.default_currency || 'USD');
         }
       } catch (error: any) {
-        if (error.response?.status === 401) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('user');
-          navigate('/login');
-        }
+        console.error('Failed to fetch restaurant data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [navigate, setRestaurantValue]);
+    if (user) {
+      fetchRestaurantData();
+    }
+  }, [user, setRestaurantValue]);
 
   const onPasswordSubmit = async (data: PasswordFormData) => {
     try {
@@ -162,32 +145,11 @@ const Settings = () => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        await axios.post(
-          `${API_URL}/auth/logout`,
-          {},
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
-      navigate('/login');
-    }
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0F0F0F]">
-        <div className="text-white">Loading...</div>
-      </div>
+      <Layout>
+        <div className="text-white">Loading restaurant data...</div>
+      </Layout>
     );
   }
 

@@ -1,53 +1,11 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/Layout';
-import { User } from '../types/user';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
-    const fetchUser = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setUser(response.data.user);
-      } catch (error) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
-        navigate('/login');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, [navigate]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0F0F0F]">
-        <div className="text-white">Loading...</div>
-      </div>
-    );
-  }
+  const { user } = useAuth();
 
   return (
-    <Layout user={user}>
+    <Layout>
       <div className="text-white">
         <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 

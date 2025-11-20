@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import loginBg from '../images/login.jpg';
 
 const loginSchema = z.object({
@@ -17,6 +18,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -70,6 +72,9 @@ const Login = () => {
       if (response.data.accessToken) {
         localStorage.setItem('accessToken', response.data.accessToken);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+
+        // Refresh user in context
+        await refreshUser();
 
         // Redirect to dashboard
         navigate('/dashboard');
