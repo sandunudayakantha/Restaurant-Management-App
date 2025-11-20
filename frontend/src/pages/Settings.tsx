@@ -32,7 +32,7 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 type RestaurantFormData = z.infer<typeof restaurantSchema>;
 
 const Settings = () => {
-  const { user, logout } = useAuth();
+  const { user, logout: handleLogout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
@@ -156,7 +156,7 @@ const Settings = () => {
   const isAdmin = user?.role === UserRole.ADMIN;
 
   return (
-    <Layout user={user}>
+    <Layout>
       <div className="text-white max-w-4xl">
         <h1 className="text-3xl font-bold mb-8">Settings</h1>
 
