@@ -55,9 +55,13 @@ RestaurantProfileSchema.statics.getProfile = async function () {
   let profile = await this.findOne();
   if (!profile) {
     profile = await this.create({
-      name: 'Restaurant',
-      address: '',
+      name: 'My Restaurant',
+      address: '123 Main Street, City, Country',
       default_currency: 'USD',
+      contact: {
+        phone: '',
+        email: '',
+      },
     });
   }
   return profile;

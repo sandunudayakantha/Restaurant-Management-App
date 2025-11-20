@@ -1,15 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Layout from '../components/Layout';
+import { User } from '../types/user';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -43,12 +38,6 @@ const Dashboard = () => {
     fetchUser();
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0F0F0F]">
@@ -58,17 +47,9 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] text-white">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 rounded-lg bg-[#008170] hover:bg-[#005B41] transition-colors"
-          >
-            Logout
-          </button>
-        </div>
+    <Layout user={user}>
+      <div className="text-white">
+        <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
         {user && (
           <div className="bg-[#232D3F] rounded-lg p-6">
@@ -85,7 +66,7 @@ const Dashboard = () => {
           </div>
         )}
       </div>
-    </div>
+    </Layout>
   );
 };
 

@@ -249,3 +249,51 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
   }
 };
 
+export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    // Find user with password hash
+    const user = await User.findById(req.user.userId).select('+passwordHash');
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Verify current password
+    const isPasswordValid = await comparePassword(currentPassword, user.passwordHash);
+    if (!isPasswordValid) {
+      res.status(401).json({ error: 'Current password is incorrect' });
+      return;
+    }
+
+    // Hash new password
+    const newPasswordHash = await hashPassword(newPassword);
+
+    // Update password
+    const before = { passwordHash: '***' }; // Don't log actual password
+    user.passwordHash = newPasswordHash;
+    await user.save();
+
+    // Create audit log
+    await createAuditLog({
+      record_type: 'User',
+      record_id: user._id,
+      user_id: req.user.userId,
+      action: AuditAction.UPDATE,
+      before,
+      after: { passwordHash: '***' },
+      req,
+    });
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to change password' });
+  }
+};
+

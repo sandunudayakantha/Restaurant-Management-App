@@ -5,6 +5,7 @@ import {
   refresh,
   logout,
   getMe,
+  changePassword,
 } from '../controllers/auth.controller';
 import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validation';
@@ -12,6 +13,7 @@ import {
   registerSchema,
   loginSchema,
   refreshTokenSchema,
+  changePasswordSchema,
 } from '../validators/auth.validator';
 import { UserRole } from '../models/User';
 import rateLimit from 'express-rate-limit';
@@ -41,6 +43,7 @@ router.post('/register', authenticate, authorize(UserRole.ADMIN), validate(regis
 // Protected routes
 router.post('/logout', authenticate, logout);
 router.get('/me', authenticate, getMe);
+router.post('/change-password', authenticate, validate(changePasswordSchema), changePassword);
 
 export default router;
 
