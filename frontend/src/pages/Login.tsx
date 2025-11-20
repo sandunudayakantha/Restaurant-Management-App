@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axios from 'axios';
+import loginBg from '../images/login.jpg';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -55,7 +56,7 @@ const Login = () => {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'url(/images/login.jpg)',
+          backgroundImage: `url(${loginBg})`,
         }}
       >
         <div className="absolute inset-0 bg-[#0F0F0F] bg-opacity-70"></div>
@@ -179,11 +180,6 @@ const Login = () => {
           </div>
         </div>
       </div>
-
-      {/* Decorative Elements */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-[#008170] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-      <div className="absolute top-40 right-10 w-72 h-72 bg-[#005B41] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-      <div className="absolute -bottom-8 left-1/2 w-72 h-72 bg-[#232D3F] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
     </div>
   );
 };
