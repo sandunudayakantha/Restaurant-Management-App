@@ -78,14 +78,26 @@ const Login = () => {
       }
     } catch (err: any) {
       console.error('Login error:', err);
+      console.error('Error response:', err.response?.data);
       
       let errorMessage = 'Login failed. Please try again.';
       
       if (err.code === 'ECONNREFUSED' || err.message === 'Network Error') {
-        errorMessage = 'Cannot connect to server. Please ensure the backend is running on port 5000.';
+        errorMessage = 'Cannot connect to server. Please ensure the backend is running on port 5001.';
+      } else if (err.response?.status === 429) {
+        errorMessage = 'Too many login attempts. Please wait a few minutes and try again.';
       } else if (err.response) {
         // Server responded with error
-        errorMessage = err.response.data?.error || `Server error: ${err.response.status}`;
+        const backendError = err.response.data?.error;
+        if (backendError) {
+          errorMessage = backendError;
+          // Add helpful message for common issues
+          if (backendError.includes('Invalid email or password')) {
+            errorMessage += '. Please ensure the database has been seeded. Run "npm run seed" in the backend folder.';
+          }
+        } else {
+          errorMessage = `Server error: ${err.response.status} ${err.response.statusText}`;
+        }
       } else if (err.request) {
         // Request made but no response
         errorMessage = 'No response from server. Please check your connection.';
