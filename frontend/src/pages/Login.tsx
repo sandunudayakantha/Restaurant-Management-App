@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,6 +20,7 @@ const Login = () => {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [backendConnected, setBackendConnected] = useState<boolean | null>(null);
 
   const {
     register,
@@ -29,23 +30,68 @@ const Login = () => {
     resolver: zodResolver(loginSchema),
   });
 
+  // Test backend connection on mount
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const response = await axios.get(`${API_URL.replace('/api', '')}/health`, {
+          timeout: 5000,
+        });
+        if (response.data.status === 'ok') {
+          setBackendConnected(true);
+        }
+      } catch (err) {
+        console.warn('Backend connection test failed:', err);
+        setBackendConnected(false);
+      }
+    };
+
+    testConnection();
+  }, []);
+
   const onSubmit = async (data: LoginFormData) => {
     try {
       setLoading(true);
       setError('');
 
-      const response = await axios.post(`${API_URL}/auth/login`, data);
+      console.log('Attempting login to:', `${API_URL}/auth/login`);
+      console.log('Email:', data.email);
+
+      const response = await axios.post(`${API_URL}/auth/login`, data, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+      });
+
+      console.log('Login response:', response.data);
 
       // Store access token
-      localStorage.setItem('accessToken', response.data.accessToken);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      if (response.data.accessToken) {
+        localStorage.setItem('accessToken', response.data.accessToken);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
 
-      // Redirect to dashboard
-      navigate('/dashboard');
+        // Redirect to dashboard
+        navigate('/dashboard');
+      } else {
+        setError('Login successful but no token received');
+      }
     } catch (err: any) {
-      setError(
-        err.response?.data?.error || 'Login failed. Please try again.'
-      );
+      console.error('Login error:', err);
+      
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (err.code === 'ECONNREFUSED' || err.message === 'Network Error') {
+        errorMessage = 'Cannot connect to server. Please ensure the backend is running on port 5000.';
+      } else if (err.response) {
+        // Server responded with error
+        errorMessage = err.response.data?.error || `Server error: ${err.response.status}`;
+      } else if (err.request) {
+        // Request made but no response
+        errorMessage = 'No response from server. Please check your connection.';
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -79,6 +125,15 @@ const Login = () => {
             </h1>
             <p className="text-[#008170] text-sm">Sign in to your account</p>
           </div>
+
+          {/* Backend Connection Status */}
+          {backendConnected === false && (
+            <div className="mb-4 p-3 rounded-lg bg-yellow-500 bg-opacity-20 border border-yellow-500 border-opacity-30">
+              <p className="text-yellow-200 text-sm">
+                ⚠️ Cannot connect to backend server. Please ensure the backend is running on port 5000.
+              </p>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (
